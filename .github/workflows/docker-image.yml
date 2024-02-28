@@ -53,8 +53,8 @@ jobs:
             cd ./docker
             docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
             docker-compose -f ./deployment.yml rm -s -f shopapp-spring-container
+            docker rmi tonionn/shopapp-spring
             docker pull tonionn/shopapp-spring:latest 
-            docker rm shopapp-spring-container
             docker-compose -f ./deployment.yml up -d shopapp-spring-container
             '
 
