@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -33,5 +33,27 @@ jobs:
           docker-compose -f deployment.yml up -d --build shopapp-spring-container
           docker tag shopapp-spring:1.0.0 ${{ secrets.DOCKERHUB_USERNAME }}/shopapp-spring:latest
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/shopapp-spring:latest
+
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Connect to EC2
+        env:
+          PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          HOSTNAME: ${{secrets.SSH_HOST}}
+          USER_NAME: ${{secrets.USER_NAME}}
+        run: |
+          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
+          ssh -o StrictHostKeyChecking=no -i private_key "${USER_NAME}@${HOSTNAME}" '
+          
+            cd ./docker
+            docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
+            docker-compose -f ./deployment.yml rm -s -f shopapp-spring-container
+            docker rm shopapp-spring-container
+            docker-compose -f ./deployment.yml up -d shopapp-spring-container
+            '
 
 
