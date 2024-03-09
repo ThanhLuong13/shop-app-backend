@@ -16,6 +16,8 @@ import com.project.shopapp.services.IUserService;
 import com.project.shopapp.utilities.MessageKeys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -137,6 +139,11 @@ public class UserService implements IUserService {
             }
         }
         return userRepository.save(existingUser);
+    }
+
+    @Override
+    public Page<UserEntity> getUserList(String keyword, Pageable pageable) {
+        return userRepository.searchUsers(keyword, pageable);
     }
 
 }

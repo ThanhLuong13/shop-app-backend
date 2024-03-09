@@ -3,6 +3,7 @@ package com.project.shopapp.controller;
 
 import com.project.shopapp.Responses.LoginResponse;
 import com.project.shopapp.Responses.RegisterResponse;
+import com.project.shopapp.Responses.UserListResponse;
 import com.project.shopapp.Responses.UserResponse;
 import com.project.shopapp.components.LocalizationUtils;
 import com.project.shopapp.dto.UpdateUserDTO;
@@ -15,13 +16,18 @@ import com.project.shopapp.utilities.MessageKeys;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("${api.prefix}/users")
@@ -112,5 +118,18 @@ public class UserController {
         } catch (Exception e) {
             return  ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @GetMapping("")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<?> getUsersList(@RequestParam(defaultValue = "", required = false) String keyword,
+                                          @RequestParam(defaultValue = "1") int page,
+                                          @RequestParam(defaultValue = "10") int size) {
+            PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by("id").ascending());
+            Page<UserEntity> userList = userService.getUserList(keyword, pageRequest);
+            UserListResponse userListResponse = new UserListResponse();
+            userListResponse.setUserList(userList.stream().map(UserResponse::formUserResponse).collect(Collectors.toList()));
+            userListResponse.setTotalPages(userList.getTotalPages());
+            return ResponseEntity.ok(userListResponse);
     }
 }
